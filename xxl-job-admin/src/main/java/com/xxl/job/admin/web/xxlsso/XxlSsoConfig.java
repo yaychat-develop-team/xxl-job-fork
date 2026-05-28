@@ -28,9 +28,14 @@ public class XxlSsoConfig implements WebMvcConfigurer {
     @Value("${xxl-sso.client.login.path}")
     private String loginPath;
 
+    @Value("${xxl.job.admin.cloudflare-access.enabled:false}")
+    private boolean cloudflareAccessEnabled;
 
     @Resource
     private SimpleLoginStore loginStore;
+
+    @Resource
+    private CloudflareAccessLoginInterceptor cloudflareAccessLoginInterceptor;
 
 
     /**
@@ -51,6 +56,11 @@ public class XxlSsoConfig implements WebMvcConfigurer {
      */
     @Override
     public void addInterceptors(InterceptorRegistry registry) {
+
+        if (cloudflareAccessEnabled) {
+            registry.addInterceptor(cloudflareAccessLoginInterceptor).addPathPatterns("/**");
+            return;
+        }
 
         // 2.1、build xxl-sso interceptor
         XxlSsoWebInterceptor webInterceptor = new XxlSsoWebInterceptor(excludedPaths, loginPath);
