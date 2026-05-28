@@ -859,7 +859,7 @@ XXL-JOB是一个分布式任务调度平台，其核心设计目标是开发迅�
 ### 1.6 环境
 - Maven：3+
 - Jdk：17+ (说明：版本3.x及以上要求Jdk17+；版本2.x及以下支持Jdk1.8)
-- Mysql：8.0+
+- PostgreSQL：15+
 
 
 ## 二、快速入门
@@ -871,9 +871,9 @@ XXL-JOB是一个分布式任务调度平台，其核心设计目标是开发迅�
 
     /xxl-job/doc/db/tables_xxl_job.sql
 
-调度中心支持集群部署，集群情况下各节点务必连接同一个mysql实例;
+调度中心支持集群部署，集群情况下各节点务必连接同一个PostgreSQL实例;
 
-如果mysql做主从,调度中心集群节点务必强制走主库;
+如果PostgreSQL做主从,调度中心集群节点务必强制走主库;
 
 ### 2.2 编译源码
 解压源码,按照maven格式将源码导入IDE, 使用maven进行编译即可，源码结构如下：
@@ -901,10 +901,10 @@ XXL-JOB是一个分布式任务调度平台，其核心设计目标是开发迅�
 
 ```
 ### 调度中心JDBC链接：链接地址请保持和 2.1章节 所创建的调度数据库的地址一致
-spring.datasource.url=jdbc:mysql://127.0.0.1:3306/xxl_job?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai
-spring.datasource.username=root
-spring.datasource.password=root_pwd
-spring.datasource.driver-class-name=com.mysql.jdbc.Driver
+spring.datasource.url=jdbc:postgresql://127.0.0.1:5432/xxl_job
+spring.datasource.username=xxl_job
+spring.datasource.password=xxl_job_pwd
+spring.datasource.driver-class-name=org.postgresql.Driver
 
 ### 报警邮箱
 spring.mail.host=smtp.qq.com
@@ -973,13 +973,13 @@ docker pull xuxueli/xxl-job-admin:{指定版本}
 
 ```
 /**
-* 如需自定义 “项目配置文件” 中配置项，比如 mysql 配置，可通过 "-e PARAMS" 指定，参数格式: -e PARAMS="--key=value --key2=value2"；
+* 如需自定义 “项目配置文件” 中配置项，比如 PostgreSQL 配置，可通过 "-e PARAMS" 指定，参数格式: -e PARAMS="--key=value --key2=value2"；
 * （配置项参考文件：/xxl-job/xxl-job-admin/src/main/resources/application.properties）
 * 如需自定义 “JVM内存参数”，可通过 "-e JAVA_OPTS" 指定，参数格式: -e JAVA_OPTS="-Xmx512m"
 * 如需自定义 “日志文件目录”，可通过 "-e LOG_HOME" 指定，参数格式: -e LOG_HOME=/data/applogs
 */
 docker run -d \
--e PARAMS="--spring.datasource.url=jdbc:mysql://127.0.0.1:3306/xxl_job?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai" \
+-e PARAMS="--spring.datasource.url=jdbc:postgresql://127.0.0.1:5432/xxl_job --spring.datasource.username=xxl_job --spring.datasource.password=xxl_job_pwd" \
 -p 8080:8080 \
 -v /tmp:/data/applogs \
 --name xxl-job-admin \
@@ -1556,7 +1556,7 @@ XXL-JOB最终选择自研调度组件（早期调度组件基于Quartz）；一�
 XXL-JOB中“调度模块”和“任务模块”完全解耦，调度模块进行任务调度时，将会解析不同的任务参数发起远程调用，调用各自的远程执行器服务。这种调用模型类似RPC调用，调度中心提供调用代理的功能，而执行器提供远程服务的功能。
 
 #### 5.4.3 调度中心HA（集群）
-基于数据库的集群方案，数据库选用Mysql；集群分布式并发环境中进行定时任务调度时，会在各个节点上报任务，存到数据库中，执行时会从数据库中取出触发器来执行，如果触发器的名称和执行时间相同，则只有一个节点去执行此任务。
+基于数据库的集群方案，数据库选用PostgreSQL；集群分布式并发环境中进行定时任务调度时，会在各个节点上报任务，存到数据库中，执行时会从数据库中取出触发器来执行，如果触发器的名称和执行时间相同，则只有一个节点去执行此任务。
 
 #### 5.4.4 调度线程池
 调度采用线程池方式实现，避免单线程因阻塞而引起任务调度延迟。
@@ -1799,13 +1799,13 @@ mvn clean package
 docker build -t xuxueli/xxl-job-admin:{指定版本} ./xxl-job-admin
 
 /**
-* 如需自定义 “项目配置文件” 中配置项，比如 mysql 配置，可通过 "-e PARAMS" 指定，参数格式: -e PARAMS="--key=value --key2=value2"；
+* 如需自定义 “项目配置文件” 中配置项，比如 PostgreSQL 配置，可通过 "-e PARAMS" 指定，参数格式: -e PARAMS="--key=value --key2=value2"；
 * （配置项参考文件：/xxl-job/xxl-job-admin/src/main/resources/application.properties）
 * 如需自定义 “JVM内存参数”，可通过 "-e JAVA_OPTS" 指定，参数格式: -e JAVA_OPTS="-Xmx512m"
 * 如需自定义 “日志文件目录”，可通过 "-e LOG_HOME" 指定，参数格式: -e LOG_HOME=/data/applogs
 */
 docker run -d \
--e PARAMS="--spring.datasource.url=jdbc:mysql://127.0.0.1:3306/xxl_job?useUnicode=true&characterEncoding=UTF-8&autoReconnect=true&serverTimezone=Asia/Shanghai" \
+-e PARAMS="--spring.datasource.url=jdbc:postgresql://127.0.0.1:5432/xxl_job --spring.datasource.username=xxl_job --spring.datasource.password=xxl_job_pwd" \
 -p 8080:8080 \
 -v /tmp:/data/applogs \
 --name xxl-job-admin \
@@ -1846,7 +1846,7 @@ mvn clean package -Dmaven.test.skip=true
 
 - 第三步：配置 XXL-JOB    
 ```
-// 注意：前往docker目录，自定义 .env 配置；如修改 MYSQL_PATH 配置设置Mysql数据持久化目录；
+// 注意：前往docker目录，自定义 .env 配置；如修改 POSTGRES_PATH 配置设置PostgreSQL数据持久化目录；
 cd ./docker
 cat .env
 ```
@@ -2108,7 +2108,7 @@ Header：
 **【于V1.1.x版本，XXL-JOB正式应用于我司，内部定制别名为 “Ferrari”，新接入应用推荐使用最新版本】**
 - 1、简单：支持通过Web页面对任务进行CRUD操作，操作简单，一分钟上手；
 - 2、动态：支持动态修改任务状态，动态暂停/恢复任务，即时生效；
-- 3、服务HA：任务信息持久化到mysql中，Job服务天然支持集群，保证服务HA；
+- 3、服务HA：任务信息持久化到PostgreSQL中，Job服务天然支持集群，保证服务HA；
 - 4、任务HA：某台Job服务挂掉，任务会平滑分配给其他的某一台存活服务，即使所有服务挂掉，重启时或补偿执行丢失任务；
 - 5、一个任务只会在其中一台服务器上执行；
 - 6、任务串行执行；
