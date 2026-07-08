@@ -22,7 +22,7 @@
 			<div class="login-box-body">
 				<p class="login-box-msg">${I18n.admin_name}</p>
 				<div class="form-group has-feedback">
-	            	<input type="text" name="userName" class="form-control" placeholder="${I18n.login_username_placeholder}"  maxlength="20" >
+	            	<input type="text" name="userName" class="form-control" placeholder="${I18n.login_username_placeholder}"  maxlength="50" >
 	            	<span class="glyphicon glyphicon-envelope form-control-feedback"></span>
 				</div>
 	          	<div class="form-group has-feedback">
@@ -68,7 +68,7 @@ $(function () {
 			userName : {
 				required : true ,
 				minlength: 4,
-				maxlength: 20
+				maxlength: 50
 			},
 			password : {
 				required : true ,
