@@ -1,6 +1,7 @@
 package com.xxl.job.admin.web.xxlsso;
 
 import com.xxl.tool.core.StringTool;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.oauth2.jose.jws.SignatureAlgorithm;
 import org.springframework.security.oauth2.jwt.Jwt;
@@ -24,6 +25,7 @@ public class CloudflareAccessJwtVerifier {
     private final String issuer;
     private final String audience;
 
+    @Autowired
     public CloudflareAccessJwtVerifier(
             @Value("${xxl.job.admin.cloudflare-access.enabled:false}") boolean enabled,
             @Value("${xxl.job.admin.cloudflare-access.team-domain:}") String teamDomain,

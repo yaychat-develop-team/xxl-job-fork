@@ -2,6 +2,8 @@ package com.xxl.job.admin.web.xxlsso;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.springframework.boot.test.util.TestPropertyValues;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtException;
@@ -11,6 +13,7 @@ import java.util.List;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
 class CloudflareAccessJwtVerifierTest {
@@ -24,6 +27,21 @@ class CloudflareAccessJwtVerifierTest {
     void setup() {
         decoder = new StubJwtDecoder();
         verifier = new CloudflareAccessJwtVerifier(decoder, ISSUER, AUDIENCE);
+    }
+
+    @Test
+    void springCreatesVerifierUsingConfiguredConstructor() {
+        try (AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext()) {
+            TestPropertyValues.of(
+                    "xxl.job.admin.cloudflare-access.enabled=false",
+                    "xxl.job.admin.cloudflare-access.team-domain=",
+                    "xxl.job.admin.cloudflare-access.audience=")
+                    .applyTo(context);
+            context.register(CloudflareAccessJwtVerifier.class);
+            context.refresh();
+
+            assertNotNull(context.getBean(CloudflareAccessJwtVerifier.class));
+        }
     }
 
     @Test
