@@ -18,7 +18,6 @@ concurrency:
 
 env:
   IMAGE_NAME: ghcr.io/yaychat-develop-team/xxl-job-fork/xxl-job-admin
-  LOG_HOME: ${{ runner.temp }}/xxl-job-tests
 
 jobs:
   publish:
@@ -55,6 +54,8 @@ jobs:
           cache: maven
 
       - name: Test Cloudflare Access integration
+        env:
+          LOG_HOME: ${{ runner.temp }}/xxl-job-tests
         run: >-
           mvn -B -pl xxl-job-admin -am
           -Dmaven.test.skip=false
