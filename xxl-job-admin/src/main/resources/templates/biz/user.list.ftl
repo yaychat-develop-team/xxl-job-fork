@@ -80,7 +80,7 @@
 						<form class="form-horizontal form" role="form" >
 							<div class="form-group">
 								<label for="lastname" class="col-sm-2 control-label">${I18n.user_username}<font color="red">*</font></label>
-								<div class="col-sm-8"><input type="text" class="form-control" name="username" placeholder="${I18n.system_please_input}${I18n.user_username}" maxlength="20" ></div>
+								<div class="col-sm-8"><input type="text" class="form-control" name="username" placeholder="${I18n.system_please_input}${I18n.user_username}" maxlength="254" ></div>
 							</div>
 							<div class="form-group">
 								<label for="lastname" class="col-sm-2 control-label">${I18n.user_password}<font color="red">*</font></label>
@@ -131,7 +131,7 @@
 						<form class="form-horizontal form" role="form" >
 							<div class="form-group">
 								<label for="lastname" class="col-sm-2 control-label">${I18n.user_username}<font color="red">*</font></label>
-								<div class="col-sm-8"><input type="text" class="form-control" name="username" placeholder="${I18n.system_please_input}${I18n.user_username}" maxlength="20" readonly ></div>
+								<div class="col-sm-8"><input type="text" class="form-control" name="username" placeholder="${I18n.system_please_input}${I18n.user_username}" maxlength="254" readonly ></div>
 							</div>
 							<div class="form-group">
 								<label for="lastname" class="col-sm-2 control-label">${I18n.user_password}<font color="red">*</font></label>
@@ -253,7 +253,7 @@
 		// add validator method
 		jQuery.validator.addMethod("myValid01", function(value, element) {
 			var length = value.length;
-			var valid = /^[a-z][a-z0-9]*$/;
+			var valid = /^[^\s@]+@[^\s@]+$|^[a-z][a-z0-9]*$/;
 			return this.optional(element) || valid.test(value);
 		}, I18n.user_username_valid );
 		$.adminTable.initAdd( {
@@ -261,7 +261,7 @@
 			rules : {
 				username : {
 					required : true,
-					rangelength:[4, 20],
+					rangelength:[4, 254],
 					myValid01: true
 				},
 				password : {
@@ -272,7 +272,7 @@
 			messages : {
 				username : {
 					required : I18n.system_please_input + I18n.user_username,
-					rangelength: I18n.system_length_limit + "[4-20]"
+					rangelength: I18n.system_length_limit + "[4-254]"
 				},
 				password : {
 					required : I18n.system_please_input + I18n.user_password,

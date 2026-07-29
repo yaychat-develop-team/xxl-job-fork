@@ -13,6 +13,7 @@ import jakarta.annotation.Resource;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.propertyeditors.CustomDateEditor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.WebDataBinder;
@@ -37,6 +38,9 @@ public class IndexController {
 	@Resource
 	private XxlJobService xxlJobService;
 
+	@Value("${xxl.job.admin.cloudflare-access.enabled:false}")
+	private boolean cloudflareAccessEnabled;
+
 	/**
 	 * index
 	 */
@@ -47,6 +51,7 @@ public class IndexController {
 		// menu resource
 		List<XxlBootResourceDTO> resourceList = findResourceList(request);
 		model.addAttribute("resourceList", resourceList);
+		model.addAttribute("cloudflareAccessEnabled", cloudflareAccessEnabled);
 
 		return "base/index";
 	}

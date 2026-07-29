@@ -1,0 +1,59 @@
+name: MySQL 8.4 Integration
+
+on:
+  pull_request:
+  push:
+    branches:
+      - develop-v3.4.0-mysql
+
+jobs:
+  mysql:
+    runs-on: ubuntu-latest
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: xxl_job
+          MYSQL_ROOT_PASSWORD: root_pwd
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping --host=127.0.0.1 --user=root --password=root_pwd"
+          --health-interval=5s
+          --health-timeout=5s
+          --health-retries=20
+
+    env:
+      LOG_HOME: ${{ runner.temp }}/xxl-job-tests
+      SPRING_DATASOURCE_URL: jdbc:mysql://127.0.0.1:3306/xxl_job?useUnicode=true&characterEncoding=UTF-8&serverTimezone=UTC
+      SPRING_DATASOURCE_USERNAME: root
+      SPRING_DATASOURCE_PASSWORD: root_pwd
+      SPRING_DATASOURCE_HIKARI_MINIMUM_IDLE: "2"
+      SPRING_DATASOURCE_HIKARI_MAXIMUM_POOL_SIZE: "10"
+
+    steps:
+      - name: Checkout source
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: "17"
+          distribution: temurin
+          cache: maven
+
+      - name: Initialize production schema
+        run: >-
+          docker run --rm --network host
+          --env MYSQL_PWD=root_pwd
+          --volume "$PWD/doc/db/tables_xxl_job.mysql.production.sql:/schema.sql:ro"
+          mysql:8.4
+          sh -ec 'mysql --host=127.0.0.1 --user=root xxl_job < /schema.sql'
+
+      - name: Verify schema, Mapper CRUD, and schedule lock
+        run: >-
+          mvn -B -pl xxl-job-admin -am
+          -Dmaven.test.skip=false
+          -Dtest=MySqlProductionSchemaIntegrationTest
+          -Dsurefire.failIfNoSpecifiedTests=false
+          test

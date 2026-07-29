@@ -6,6 +6,7 @@ import com.xxl.tool.core.StringTool;
 import com.xxl.tool.crypto.Sha256Tool;
 import com.xxl.tool.id.UUIDTool;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -36,7 +37,15 @@ public class CloudflareAccessUserService {
         xxlJobUser.setPassword(Sha256Tool.sha256(UUIDTool.getSimpleUUID()));
         xxlJobUser.setRole(autoRegisterRole);
         xxlJobUser.setPermission(null);
-        xxlJobUserMapper.save(xxlJobUser);
-        return xxlJobUser;
+        try {
+            xxlJobUserMapper.save(xxlJobUser);
+            return xxlJobUser;
+        } catch (DuplicateKeyException exception) {
+            XxlJobUser concurrentUser = xxlJobUserMapper.loadByUserName(username);
+            if (concurrentUser != null) {
+                return concurrentUser;
+            }
+            throw exception;
+        }
     }
 }

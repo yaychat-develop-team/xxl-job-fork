@@ -11,6 +11,7 @@ import com.xxl.tool.core.StringTool;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.oauth2.jwt.JwtException;
 import org.springframework.stereotype.Component;
 import org.springframework.web.method.HandlerMethod;
 import org.springframework.web.servlet.HandlerInterceptor;
@@ -23,36 +24,38 @@ import java.util.Map;
 public class CloudflareAccessLoginInterceptor implements HandlerInterceptor {
 
     private final CloudflareAccessUserService cloudflareAccessUserService;
+    private final CloudflareAccessJwtVerifier jwtVerifier;
     private final boolean enabled;
-    private final String emailHeader;
 
     public CloudflareAccessLoginInterceptor(
             CloudflareAccessUserService cloudflareAccessUserService,
-            @Value("${xxl.job.admin.cloudflare-access.enabled:false}") boolean enabled,
-            @Value("${xxl.job.admin.cloudflare-access.email-header:Cf-Access-Authenticated-User-Email}") String emailHeader) {
+            CloudflareAccessJwtVerifier jwtVerifier,
+            @Value("${xxl.job.admin.cloudflare-access.enabled:false}") boolean enabled) {
         this.cloudflareAccessUserService = cloudflareAccessUserService;
+        this.jwtVerifier = jwtVerifier;
         this.enabled = enabled;
-        this.emailHeader = emailHeader;
     }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if (!enabled || isOpenApi(request)) {
+        if (!enabled || isBypassedPath(request)) {
             return true;
+        }
+        if (isNativeLoginPath(request)) {
+            response.sendError(HttpServletResponse.SC_NOT_FOUND);
+            return false;
         }
 
         HandlerMethod method = handler instanceof HandlerMethod ? (HandlerMethod) handler : null;
         XxlSso xxlSso = method != null ? method.getMethodAnnotation(XxlSso.class) : null;
-        boolean needLogin = xxlSso != null ? xxlSso.login() : true;
         String permission = xxlSso != null ? xxlSso.permission() : null;
         String role = xxlSso != null ? xxlSso.role() : null;
 
-        String username = getCloudflareUsername(request);
-        if (StringTool.isBlank(username)) {
-            if (method == null || !needLogin) {
-                return true;
-            }
-            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "missing cloudflare access identity");
+        String username;
+        try {
+            username = jwtVerifier.verify(request.getHeader(CloudflareAccessJwtVerifier.ACCESS_JWT_HEADER));
+        } catch (JwtException exception) {
+            response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "invalid cloudflare access identity");
             return false;
         }
 
@@ -60,7 +63,7 @@ public class CloudflareAccessLoginInterceptor implements HandlerInterceptor {
         LoginInfo loginInfo = buildLoginInfo(xxlJobUser);
         request.setAttribute(Const.XXL_SSO_USER, loginInfo);
 
-        if (method == null || !needLogin) {
+        if (method == null) {
             return true;
         }
 
@@ -74,22 +77,23 @@ public class CloudflareAccessLoginInterceptor implements HandlerInterceptor {
         return true;
     }
 
-    private boolean isOpenApi(HttpServletRequest request) {
+    private boolean isBypassedPath(HttpServletRequest request) {
         String servletPath = request.getServletPath();
-        return servletPath != null && servletPath.startsWith("/api/");
+        return matchesPath(servletPath, "/api") || matchesPath(servletPath, "/actuator/health");
     }
 
-    private String getCloudflareUsername(HttpServletRequest request) {
-        String username = request.getHeader(emailHeader);
-        return username != null ? username.trim() : null;
+    private boolean isNativeLoginPath(HttpServletRequest request) {
+        return matchesPath(request.getServletPath(), "/auth");
+    }
+
+    private boolean matchesPath(String servletPath, String prefix) {
+        return servletPath != null && (servletPath.equals(prefix) || servletPath.startsWith(prefix + "/"));
     }
 
     private LoginInfo buildLoginInfo(XxlJobUser user) {
         LoginInfo loginInfo = new LoginInfo(String.valueOf(user.getId()), user.getToken());
         loginInfo.setUserName(user.getUsername());
-        if (user.getRole() == 1) {
-            loginInfo.setRoleList(List.of(Consts.ADMIN_ROLE));
-        }
+        loginInfo.setRoleList(List.of(Consts.ADMIN_ROLE));
         Map<String, String> extraInfo = new HashMap<>();
         extraInfo.put("jobGroups", user.getPermission());
         loginInfo.setExtraInfo(extraInfo);

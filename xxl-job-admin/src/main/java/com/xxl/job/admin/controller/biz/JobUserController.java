@@ -86,8 +86,8 @@ public class JobUserController {
             return Response.ofFail(I18nUtil.getString("system_please_input")+I18nUtil.getString("user_username") );
         }
         xxlJobUser.setUsername(xxlJobUser.getUsername().trim());
-        if (!(xxlJobUser.getUsername().length()>=4 && xxlJobUser.getUsername().length()<=20)) {
-            return Response.ofFail(I18nUtil.getString("system_length_limit")+"[4-20]" );
+        if (!(xxlJobUser.getUsername().length()>=4 && xxlJobUser.getUsername().length()<=254)) {
+            return Response.ofFail(I18nUtil.getString("system_length_limit")+"[4-254]" );
         }
         // valid password
         if (StringTool.isBlank(xxlJobUser.getPassword())) {
